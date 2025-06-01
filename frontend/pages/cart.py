@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import time
+from services.kafka_logger import log_user_action
 
 API_URL = "http://fastapi:8000"
 
@@ -28,6 +29,13 @@ def show_cart_page(email):
                 try:
                     resp = requests.post(f"{API_URL}/cart/add", json={"email": email, "product_id": selected_product['product_id'], "quantity": quantity})
                     resp.raise_for_status()
+                    
+                    # Log cart addition
+                    log_user_action('cart_add', email, 
+                                  product_id=selected_product['product_id'],
+                                  quantity=quantity,
+                                  product_name=selected_product['name'])
+                    
                     st.success(f"Товар '{selected_product['name']}' добавлен в корзину.")
                     time.sleep(1)
                     st.rerun()
@@ -57,13 +65,30 @@ def show_cart_page(email):
 
     if st.button("Оформить заказ"):
         try:
-            resp = requests.post(f"{API_URL}/cart/checkout", json={"email": email})
+            # Prepare order data
+            order_data = {
+                "email": email,
+                "items": cart["items"],
+                "total_amount": total
+            }
+            
+            resp = requests.post(f"{API_URL}/cart/checkout", json=order_data)
             resp.raise_for_status()
+            order_response = resp.json()
+            
+            # Log order placement
+            log_user_action('order_place', email,
+                          order_id=order_response.get('order_id'),
+                          total_amount=total,
+                          items_count=len(cart["items"]))
+            
             st.success("Заказ успешно оформлен!")
             time.sleep(2)
             st.rerun()
         except Exception as e:
             st.error(f"Ошибка при оформлении заказа: {e}")
+            if hasattr(e, 'response') and e.response is not None:
+                st.error(f"Детали ошибки: {e.response.json().get('detail', 'Неизвестная ошибка')}")
 
     if st.button("Очистить корзину"):
         try:

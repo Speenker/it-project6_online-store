@@ -21,6 +21,11 @@ def login():
             st.session_state["token"] = data["token"]
             st.session_state["user"] = data["user"]
             st.session_state["admin"] = data.get("is_admin", False)
+            
+            # Log successful login
+            from services.logging_config import logger
+            logger.info(f"User logged in successfully: {email}")
+            
             st.success(f"Добро пожаловать, {email}!")
             time.sleep(1)
             st.rerun()
@@ -41,6 +46,10 @@ def register():
             return
         resp = requests.post(f"{API_URL}/register", json={"email": email, "password": password})
         if resp.status_code == 201:
+            # Log successful registration
+            from services.logging_config import logger
+            logger.info(f"New user registered: {email}")
+            
             st.success("Успешная регистрация! Теперь войдите.")
             time.sleep(1)
             st.rerun()
@@ -50,12 +59,20 @@ def register():
 def logout():
     st.title("Выход")
     if st.button("Выйти из аккаунта"):
+        # Log logout
+        from services.logging_config import logger
+        if "user" in st.session_state:
+            logger.info(f"User logged out: {st.session_state['user']['email']}")
+        
         st.session_state.clear()
         st.success("Вы вышли из аккаунта.")
         time.sleep(1)
         st.rerun()
 
 def main():
+    # Initialize logging
+    from services.logging_config import logger
+    
     if not st.session_state.get("authenticated"):
         pg = st.radio("Войдите или зарегистрируйтесь", ["Вход", "Регистрация", "Основная"])
         if pg == "Вход":
