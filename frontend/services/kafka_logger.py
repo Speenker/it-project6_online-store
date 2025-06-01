@@ -3,6 +3,7 @@ from kafka import KafkaProducer
 from datetime import datetime
 import logging
 from .logging_config import logger
+from .clickhouse_logger import log_to_clickhouse
 
 # Kafka configuration
 KAFKA_BOOTSTRAP_SERVERS = 'kafka:9092'
@@ -16,7 +17,7 @@ producer = KafkaProducer(
 
 def log_user_action(action_type, email, **kwargs):
     """
-    Log user actions to Kafka and console
+    Log user actions to Kafka, console and ClickHouse
     """
     try:
         # Prepare log data
@@ -33,6 +34,9 @@ def log_user_action(action_type, email, **kwargs):
         # Log to console
         logger = logging.getLogger('kafka_logger')
         logger.info(f"User Action: {action_type} | User: {email} | Details: {kwargs}")
+        
+        # Log to ClickHouse
+        log_to_clickhouse(action_type, email, **kwargs)
         
     except Exception as e:
         logger = logging.getLogger('kafka_logger')
