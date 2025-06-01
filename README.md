@@ -1,4 +1,4 @@
-# Минимальная архитектура онлайн-магазина
+# Архитектура онлайн-магазина
 
 ## Архитектура
 - **Streamlit UI (FE)** — фронтенд
@@ -26,8 +26,8 @@ docker-compose up --build
 
 ## Проверка
 - Перейти на [http://localhost:8501](http://localhost:8501) — Streamlit UI
-- Нажать кнопку "Проверить backend" для теста связи с FastAPI
 
 ## Структура
 - `backend/` — FastAPI приложение
 - `frontend/` — Streamlit приложение 
+- `etl/` - ETL Pipeline

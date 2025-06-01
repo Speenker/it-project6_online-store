@@ -6,6 +6,7 @@ from pages.main_page import show_main_page
 from pages.cart import show_cart_page
 from pages.profile import show_profile_page
 from pages.admin_panel import show_admin_panel
+from pages.admin_dashboard import show_dashboard
 from services.kafka_logger import log_user_action
 from services.logging_config import logger
 import pandas as pd
@@ -95,6 +96,7 @@ def main():
         page_options = ["Основная", "Профиль", "Корзина", "Выход"]
         if is_admin:
             page_options.insert(-1, "Панель Администратора")
+            page_options.insert(-1, "Аналитика")
         page = st.sidebar.radio("Перейти к странице", page_options)
         if page == "Профиль":
             show_profile_page(user["email"])
@@ -104,6 +106,8 @@ def main():
             show_main_page()
         elif page == "Панель Администратора":
             show_admin_panel()
+        elif page == "Аналитика":
+            show_dashboard()
         elif page == "Выход":
             logout()
 
