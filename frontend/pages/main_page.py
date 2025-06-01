@@ -6,7 +6,13 @@ API_URL = "http://fastapi:8000"
 def show_main_page():
     st.title("Каталог товаров")
 
-    search_query = st.text_input("Поиск по товарам (по названию и описанию):", "")
+    # Инициализация состояния поиска
+    if "search_query" not in st.session_state:
+        st.session_state.search_query = ""
+    if "search_results" not in st.session_state:
+        st.session_state.search_results = []
+
+    search_query = st.text_input("Поиск по товарам (по названию и описанию):", st.session_state.search_query)
     use_search = st.button("Искать")
 
     products = []
@@ -16,9 +22,15 @@ def show_main_page():
             resp = requests.get(f"{API_URL}/search", params={"q": search_query})
             resp.raise_for_status()
             products = resp.json()
+            # Сохраняем результаты поиска
+            st.session_state.search_query = search_query
+            st.session_state.search_results = products
         except Exception as e:
             st.error(f"Ошибка при поиске: {e}")
             return
+    elif st.session_state.search_results:
+        # Используем сохраненные результаты поиска
+        products = st.session_state.search_results
     else:
         # Получение всех товаров
         try:
