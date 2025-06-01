@@ -14,7 +14,7 @@ DB_CONFIG = {
 }
 
 def get_all_products():
-    query = "SELECT product_id, name, price FROM products"
+    query = "SELECT product_id, name, price, stock FROM products"
     with psycopg2.connect(**DB_CONFIG) as conn:
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute(query)
