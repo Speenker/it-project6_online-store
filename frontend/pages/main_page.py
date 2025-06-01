@@ -1,10 +1,15 @@
 import streamlit as st
 import requests
+from services.kafka_logger import log_user_action
 
 API_URL = "http://fastapi:8000"
 
 def show_main_page():
     st.title("Каталог товаров")
+
+    # Initialize viewed products in session state if not exists
+    if 'viewed_products' not in st.session_state:
+        st.session_state.viewed_products = set()
 
     search_query = st.text_input("Поиск по товарам (по названию и описанию):", "")
     use_search = st.button("Искать")
@@ -41,6 +46,15 @@ def show_main_page():
         return
 
     product_id = selected_product["product_id"]
+
+    # Log product view only if it's the first time viewing this product
+    if st.session_state.get("authenticated") and product_id not in st.session_state.viewed_products:
+        user_email = st.session_state.get("username")
+        log_user_action('product_view', user_email,
+                    product_id=product_id,
+                    product_name=selected_product['name'])
+        # Add product to viewed products set
+        st.session_state.viewed_products.add(product_id)
 
     # Получение деталей товара (всегда)
     try:
