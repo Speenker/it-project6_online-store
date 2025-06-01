@@ -7,6 +7,7 @@ from pages.main_page import show_main_page
 from pages.cart import show_cart_page
 from pages.profile import show_profile_page
 from pages.admin_panel import show_admin_panel
+from services.logging_config import logger
 
 API_URL = "http://fastapi:8000"
 
@@ -22,6 +23,9 @@ def login():
             st.session_state["token"] = data["token"]
             st.session_state["user"] = data["user"]
             st.session_state["admin"] = data.get("is_admin", False)
+            # Log successful login
+            logger.info(f"User logged in successfully: {email}")
+
             st.session_state["username"] = email
             st.success(f"Добро пожаловать, {email}!")
             time.sleep(1)
@@ -43,6 +47,9 @@ def register():
             return
         resp = requests.post(f"{API_URL}/register", json={"email": email, "password": password})
         if resp.status_code == 200:
+            # Log successful registration
+            
+            logger.info(f"New user registered: {email}")
             st.success("Успешная регистрация! Теперь войдите.")
             time.sleep(1)
             st.rerun()
@@ -52,6 +59,11 @@ def register():
 def logout():
     st.title("Выход")
     if st.button("Выйти из аккаунта"):
+        # Log logout
+        from services.logging_config import logger
+        if "user" in st.session_state:
+            logger.info(f"User logged out: {st.session_state['user']['email']}")
+        
         st.session_state.clear()
         st.success("Вы вышли из аккаунта.")
         time.sleep(1)

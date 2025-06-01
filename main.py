@@ -7,6 +7,7 @@ from pages.admin_panel import show_admin_panel
 from pages.cart import show_cart_page
 from pages.main_page import show_main_page
 from pages.profile import show_profile_page
+from services.kafka_logger import log_user_action
 
 from services.auth import Authotize
 import services.users
@@ -72,6 +73,9 @@ def register():
         user_id = registr.registr(pd.DataFrame({"email": [email], "password": [password]}))
         token = str(uuid.uuid4())
         store_token(user_id, token)
+        
+        # Log user registration
+        log_user_action('registration', user_id, email=email)
 
         streamlit.success("Успешная регистрация!")
         streamlit.session_state["authenticated"] = True

@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import time
+from services.kafka_logger import log_user_action
 
 API_URL = "http://fastapi:8000"
 
