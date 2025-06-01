@@ -4,3 +4,4 @@ psycopg2-binary
 elasticsearch==8.11.1
 kafka-python
 clickhouse-driver
+bcrypt
