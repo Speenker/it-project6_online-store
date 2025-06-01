@@ -7,12 +7,14 @@ from endpoints.products import router as products_router
 from endpoints.profile import router as profile_router
 from endpoints.cart import router as cart_router
 from endpoints.admin_panel import router as admin_panel_router
+from endpoints.analytics import router as analytics_router
 
 app = FastAPI()
 app.include_router(products_router)
 app.include_router(profile_router)
 app.include_router(cart_router)
 app.include_router(admin_panel_router)
+app.include_router(analytics_router, prefix="/analytics", tags=["analytics"])
 
 admin_emails = {"admin@example.com"}
 

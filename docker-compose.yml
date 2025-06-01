@@ -11,6 +11,13 @@ services:
       - "5432:5432"
     volumes:
       - pg_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d store_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   elasticsearch:
     image: elasticsearch:8.11.1
@@ -22,6 +29,13 @@ services:
       - "9200:9200"
     volumes:
       - es_data:/usr/share/elasticsearch/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200 >/dev/null || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   kafka:
     image: bitnami/kafka:3.5.1
@@ -34,6 +48,13 @@ services:
       - "9092:9092"
     depends_on:
       - zookeeper
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:9092 --list"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   zookeeper:
     image: bitnami/zookeeper:3.8.1
@@ -41,6 +62,13 @@ services:
       - ALLOW_ANONYMOUS_LOGIN=yes
     ports:
       - "2181:2181"
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "echo srvr | nc localhost 2181 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   clickhouse:
     image: yandex/clickhouse-server:latest
@@ -49,23 +77,50 @@ services:
       - "9000:9000"
     volumes:
       - ch_data:/var/lib/clickhouse
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8123/ping || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   fastapi:
     build: ./backend
     ports:
       - "8000:8000"
     depends_on:
-      - postgres
-      - elasticsearch
-      - kafka
-      - clickhouse
+      postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      clickhouse:
+        condition: service_healthy
+    networks:
+      - app-network
+    environment:
+      - POSTGRES_HOST=postgres
+      - ELASTICSEARCH_HOST=elasticsearch
+      - KAFKA_HOST=kafka
+      - CLICKHOUSE_HOST=clickhouse
 
   streamlit:
     build: ./frontend
     ports:
       - "8501:8501"
     depends_on:
-      - fastapi
+      fastapi:
+        condition: service_started
+    networks:
+      - app-network
+    environment:
+      - API_URL=http://fastapi:8000
+
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
   pg_data:
