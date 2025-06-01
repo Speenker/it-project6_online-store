@@ -1,7 +1,7 @@
 fastapi
 uvicorn[standard]
 psycopg2-binary
-elasticsearch
+elasticsearch==8.11.1
 kafka-python
 clickhouse-driver
-bcrypt 
+bcrypt

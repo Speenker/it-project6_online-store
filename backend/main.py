@@ -9,6 +9,7 @@ from endpoints.products import router as products_router
 from endpoints.profile import router as profile_router
 from endpoints.cart import router as cart_router
 from endpoints.admin_panel import router as admin_panel_router
+from repositories.es_sync import sync_products_to_es
 
 app = FastAPI()
 app.include_router(products_router)
@@ -30,6 +31,10 @@ class UserOut(BaseModel):
     user_id: int
     email: str
     balance: float
+
+@app.on_event("startup")
+def sync_es_on_startup():
+    sync_products_to_es()
 
 @app.post("/login")
 def login(user: UserIn):
