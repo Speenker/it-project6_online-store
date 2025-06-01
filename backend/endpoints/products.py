@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from repositories import products as repo
 
 router = APIRouter()
@@ -20,4 +20,8 @@ def get_product_details(product_id: int):
 
 @router.get("/products/{product_id}/reviews")
 def get_product_reviews(product_id: int):
-    return repo.get_product_reviews(product_id) 
+    return repo.get_product_reviews(product_id)
+
+@router.get("/search")
+def search_products(q: str = Query(..., description="Поисковый запрос")):
+    return repo.search_products(q) 
