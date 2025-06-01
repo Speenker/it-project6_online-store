@@ -2,6 +2,7 @@ import psycopg2
 import psycopg2.extras
 import os
 import sys
+import bcrypt
 
 # Добавляем корневую директорию проекта в PYTHONPATH
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
@@ -23,6 +24,34 @@ def create_tables():
         with conn.cursor() as cur:
             cur.execute(ddl_script)
             conn.commit()
+
+def encrypt_passwords():
+    """
+    Шифрует пароли в таблице users после загрузки данных
+    """
+    try:
+        with psycopg2.connect(**DB_CONFIG) as conn:
+            with conn.cursor() as cursor:
+                # Получаем всех пользователей
+                cursor.execute("SELECT email, password FROM users")
+                users = cursor.fetchall()
+                
+                for email, password in users:
+                    # Проверяем, является ли пароль уже хешем
+                    if not isinstance(password, str) or not password.startswith('$2b$'):
+                        # Хешируем пароль
+                        hashed_password = bcrypt.hashpw(str(password).encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+                        # Обновляем пароль в базе
+                        cursor.execute(
+                            "UPDATE users SET password = %s WHERE email = %s",
+                            (hashed_password, email)
+                        )
+                
+                conn.commit()
+                print("Пароли успешно зашифрованы")
+    except Exception as e:
+        print(f"Ошибка при шифровании паролей: {e}")
+        raise
 
 def load_data(df, table_name):
     """
@@ -58,4 +87,8 @@ def load_data(df, table_name):
             psycopg2.extras.execute_batch(cur, query, values)
             conn.commit()
             
-    print(f"Загружено {len(values)} записей в таблицу {table_name}") 
+    print(f"Загружено {len(values)} записей в таблицу {table_name}")
+    
+    # Если загружаем данные в таблицу users, шифруем пароли
+    if table_name == 'users':
+        encrypt_passwords() 

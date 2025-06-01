@@ -3,4 +3,5 @@ uvicorn[standard]
 psycopg2-binary
 elasticsearch
 kafka-python
-clickhouse-driver 
+clickhouse-driver
+bcrypt 

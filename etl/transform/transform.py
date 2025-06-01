@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import bcrypt
 
 def generate_random_foreign_keys(df, column_name, min_id=1, max_id=80):
     """
@@ -50,6 +51,26 @@ def clean_data(df):
     df.loc[:, string_columns] = df[string_columns].fillna('')
     
     return df
+
+def hash_password(password: str) -> str:
+    """
+    Хеширует пароль с использованием bcrypt
+    
+    Args:
+        password (str): Пароль для хеширования
+        
+    Returns:
+        str: Хешированный пароль
+    """
+    try:
+        # Проверяем, является ли пароль уже хешем
+        if isinstance(password, str) and password.startswith('$2b$'):
+            return password
+        salt = bcrypt.gensalt()
+        return bcrypt.hashpw(str(password).encode("utf-8"), salt).decode("utf-8")
+    except Exception as e:
+        print(f"Ошибка при хешировании пароля: {e}")
+        return password
 
 def transform_data(df, table_name):
     """
@@ -102,5 +123,10 @@ def transform_data(df, table_name):
             df = generate_random_foreign_keys(df, 'order_id')
         if 'product_id' in df.columns:
             df = generate_random_foreign_keys(df, 'product_id')
+            
+    elif table_name == 'users':
+        # Хешируем пароли
+        if 'password' in df.columns:
+            df.loc[:, 'password'] = df['password'].apply(hash_password)
     
     return df 
