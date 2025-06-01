@@ -6,17 +6,31 @@ API_URL = "http://fastapi:8000"
 def show_main_page():
     st.title("Каталог товаров")
 
-    # Получение списка продуктов через API
-    try:
-        resp = requests.get(f"{API_URL}/products")
-        resp.raise_for_status()
-        products = resp.json()
-    except Exception as e:
-        st.error(f"Ошибка при получении товаров: {e}")
-        return
+    search_query = st.text_input("Поиск по товарам (по названию и описанию):", "")
+    use_search = st.button("Искать")
+
+    products = []
+    if search_query and use_search:
+        # Поиск через Elasticsearch
+        try:
+            resp = requests.get(f"{API_URL}/search", params={"q": search_query})
+            resp.raise_for_status()
+            products = resp.json()
+        except Exception as e:
+            st.error(f"Ошибка при поиске: {e}")
+            return
+    else:
+        # Получение всех товаров
+        try:
+            resp = requests.get(f"{API_URL}/products")
+            resp.raise_for_status()
+            products = resp.json()
+        except Exception as e:
+            st.error(f"Ошибка при получении товаров: {e}")
+            return
 
     if not products:
-        st.warning("В магазине пока нет товаров.")
+        st.warning("Товары не найдены.")
         return
 
     product_names = [product["name"] for product in products]
