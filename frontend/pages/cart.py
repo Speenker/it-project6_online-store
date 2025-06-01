@@ -96,6 +96,11 @@ def show_cart_page(email):
                             }
                         )
                         resp.raise_for_status()
+                        # Log cart addition
+                        log_user_action('cart_add', email, 
+                                  product_id=selected_product['product_id'],
+                                  quantity=quantity,
+                                  product_name=selected_product['name'])
                         st.success(f"Товар '{selected_product['name']}' добавлен в корзину.")
                         time.sleep(1)
                         st.rerun()
@@ -136,8 +141,23 @@ def show_cart_page(email):
                 st.error(f"- {item}")
         else:
             try:
-                resp = requests.post(f"{API_URL}/cart/checkout", json={"email": email})
+                # resp = requests.post(f"{API_URL}/cart/checkout", json={"email": email})
+                # resp.raise_for_status()
+                order_data = {
+                "email": email,
+                "items": cart["items"],
+                "total_amount": total
+                }
+
+                resp = requests.post(f"{API_URL}/cart/checkout", json=order_data)
                 resp.raise_for_status()
+                order_response = resp.json()
+
+                # Log order placement
+                log_user_action('order_place', email,
+                          order_id=order_response.get('order_id'),
+                          total_amount=total,
+                          items_count=len(cart["items"]))
                 st.success("Заказ успешно оформлен!")
                 time.sleep(2)
                 st.rerun()

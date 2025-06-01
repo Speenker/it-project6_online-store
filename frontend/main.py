@@ -7,6 +7,8 @@ from pages.cart import show_cart_page
 from pages.profile import show_profile_page
 from pages.admin_panel import show_admin_panel
 from services.kafka_logger import log_user_action
+from services.logging_config import logger
+import pandas as pd
 
 API_URL = "http://fastapi:8000"
 
@@ -45,7 +47,7 @@ def register():
             st.error("Пароли не совпадают!")
             return
         resp = requests.post(f"{API_URL}/register", json={"email": email, "password": password})
-        if resp.status_code == 201:
+        if resp.status_code == 200:
             # Log successful registration
             log_user_action('register', email)
             
@@ -69,7 +71,15 @@ def logout():
 
 def main():
     # Initialize logging
-    from services.logging_config import logger
+    # Инициализация состояний сессии
+    if "authenticated" not in st.session_state:
+        st.session_state["authenticated"] = False
+
+    if "admin" not in st.session_state:
+        st.session_state["admin"] = False
+
+    if "user" not in st.session_state:
+        st.session_state.user = pd.DataFrame(columns=["user_id", "email", "balance"])
     
     if not st.session_state.get("authenticated"):
         pg = st.radio("Войдите или зарегистрируйтесь", ["Вход", "Регистрация", "Основная"])

@@ -3,18 +3,15 @@ from repositories import users as user_repo
 
 class Authorize:
     def __init__(self):
-        self.users = self.get_users()
-
-    def get_users(self):
-        users = user_repo.get_users_with_password()
-        return {user["email"]: user["password"] for user in users}
+        pass
 
     def auth(self, email, password: str):
-        if email not in self.users:
+        user = user_repo.get_user_by_email(email)
+        if not user:
             print(f"Пользователь {email} не найден")
             return False
 
-        stored_password = self.users[email]
+        stored_password = user["password"]
         if not stored_password:
             print(f"Пароль для пользователя {email} не найден")
             return False
