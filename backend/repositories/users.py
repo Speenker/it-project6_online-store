@@ -11,21 +11,79 @@ DB_CONFIG = {
 }
 
 def get_user_by_email(email):
+    """
+    Получает пользователя по email
+    
+    Args:
+        email (str): Email пользователя
+        
+    Returns:
+        dict: Данные пользователя или None, если пользователь не найден
+    """
     query = "SELECT user_id, email, password, balance FROM users WHERE email = %s"
-    with psycopg2.connect(**DB_CONFIG) as conn:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            cur.execute(query, (email,))
-            user = cur.fetchone()
-            return user
+    try:
+        with psycopg2.connect(**DB_CONFIG) as conn:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(query, (email,))
+                user = cur.fetchone()
+                if user:
+                    print(f"Найден пользователь {email} с паролем: {user['password'][:10]}...")
+                else:
+                    print(f"Пользователь {email} не найден")
+                return user
+    except Exception as e:
+        print(f"Ошибка при получении пользователя {email}: {e}")
+        return None
+
+def get_users_with_password():
+    """
+    Получает всех пользователей с паролями
+    
+    Returns:
+        list: Список пользователей с паролями
+    """
+    query = "SELECT user_id, email, password FROM users"
+    try:
+        with psycopg2.connect(**DB_CONFIG) as conn:
+            with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+                cur.execute(query)
+                users = cur.fetchall()
+                print(f"Получено {len(users)} пользователей из базы данных")
+                for user in users:
+                    print(f"Пользователь {user['email']} с паролем: {user['password'][:10]}...")
+                return users
+    except Exception as e:
+        print(f"Ошибка при получении пользователей: {e}")
+        return []
 
 def create_user(email, password):
-    query = "INSERT INTO users (email, password, balance) VALUES (%s, %s, 0.0) RETURNING user_id, email, balance"
-    with psycopg2.connect(**DB_CONFIG) as conn:
-        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-            cur.execute(query, (email, password))
-            user = cur.fetchone()
-            conn.commit()
-            return user
+    """
+    Создает нового пользователя
+    
+    Args:
+        email (str): Email пользователя
+        password (str): Хешированный пароль пользователя
+        
+    Returns:
+        int: ID созданного пользователя
+    """
+    query = """
+        INSERT INTO users (email, password, balance) 
+        VALUES (%s, %s, 0.0) 
+        RETURNING user_id
+    """
+    try:
+        print(f"Создание пользователя {email} с паролем: {password[:10]}...")
+        with psycopg2.connect(**DB_CONFIG) as conn:
+            with conn.cursor() as cur:
+                cur.execute(query, (email, password))
+                user_id = cur.fetchone()[0]
+                conn.commit()
+                print(f"Пользователь {email} успешно создан с ID {user_id}")
+                return user_id
+    except Exception as e:
+        print(f"Ошибка при создании пользователя {email}: {e}")
+        raise
 
 def check_user_password(email, password):
     user = get_user_by_email(email)
