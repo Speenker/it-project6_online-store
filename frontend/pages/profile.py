@@ -1,6 +1,6 @@
 import streamlit as st
-import requests
 import time
+from services.http_client import make_request
 
 API_URL = "http://fastapi:8000"
 
@@ -9,7 +9,7 @@ def show_profile_page(email):
 
     # Получение информации о пользователе
     try:
-        resp = requests.get(f"{API_URL}/user", params={"email": email})
+        resp = make_request(f"{API_URL}/user", params={"email": email})
         resp.raise_for_status()
         user = resp.json()
     except Exception as e:
@@ -24,7 +24,7 @@ def show_profile_page(email):
     if st.button("Пополнить баланс"):
         if add_balance > 0:
             try:
-                resp = requests.post(f"{API_URL}/user/balance", json={"email": email, "amount": add_balance})
+                resp = make_request(f"{API_URL}/user/balance", method="POST", json={"email": email, "amount": add_balance})
                 resp.raise_for_status()
                 new_balance = resp.json()["balance"]
                 st.success(f"Баланс успешно пополнен. Новый баланс: {new_balance:.2f}")
@@ -38,7 +38,7 @@ def show_profile_page(email):
     st.divider()
     st.write("### Ваши заказы")
     try:
-        orders_resp = requests.get(f"{API_URL}/orders", params={"email": email})
+        orders_resp = make_request(f"{API_URL}/orders", params={"email": email})
         orders_resp.raise_for_status()
         user_orders = orders_resp.json()
     except Exception as e:
@@ -57,7 +57,7 @@ def show_profile_page(email):
             st.session_state["items"] = not st.session_state["items"]
         if st.session_state["items"]:
             try:
-                items_resp = requests.get(f"{API_URL}/orders/{selected_order['order_id']}/items")
+                items_resp = make_request(f"{API_URL}/orders/{selected_order['order_id']}/items")
                 items_resp.raise_for_status()
                 order_items = items_resp.json()
             except Exception as e:

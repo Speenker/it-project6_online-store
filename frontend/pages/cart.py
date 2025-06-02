@@ -1,8 +1,8 @@
 import datetime
 import streamlit as st
-import requests
 import time
 from services.kafka_logger import log_user_action
+from services.http_client import make_request
 
 API_URL = "http://fastapi:8000"
 
@@ -20,7 +20,7 @@ def show_cart_page(email):
     products = []
     if search_query and use_search:
         try:
-            resp = requests.get(f"{API_URL}/search", params={"q": search_query})
+            resp = make_request(f"{API_URL}/search", params={"q": search_query})
             resp.raise_for_status()
             products = resp.json()
             st.session_state.search_query = search_query
@@ -32,7 +32,7 @@ def show_cart_page(email):
         products = st.session_state.search_results
     else:
         try:
-            resp = requests.get(f"{API_URL}/products")
+            resp = make_request(f"{API_URL}/products")
             resp.raise_for_status()
             products = resp.json()
         except Exception as e:
@@ -46,7 +46,7 @@ def show_cart_page(email):
     st.write("### Список товаров")
 
     try:
-        resp = requests.get(f"{API_URL}/products")
+        resp = make_request(f"{API_URL}/products")
         resp.raise_for_status()
         all_products = resp.json()
         stock_data = {p['product_id']: p['stock'] for p in all_products}
@@ -55,7 +55,7 @@ def show_cart_page(email):
         return
 
     try:
-        cart_resp = requests.get(f"{API_URL}/cart", params={"email": email})
+        cart_resp = make_request(f"{API_URL}/cart", params={"email": email})
         cart_resp.raise_for_status()
         current_cart = cart_resp.json()
         cart_items = {item['product_id']: item['quantity'] for item in current_cart.get('items', [])}
@@ -88,8 +88,9 @@ def show_cart_page(email):
                     st.error(f"Нельзя добавить в корзину {quantity} шт. товара '{selected_product['name']}'. Доступно только {available_stock} шт.")
                 else:
                     try:
-                        resp = requests.post(
+                        resp = make_request(
                             f"{API_URL}/cart/add",
+                            method="POST",
                             json={
                                 "email": email,
                                 "product_id": product_id,
@@ -113,7 +114,7 @@ def show_cart_page(email):
     st.divider()
     st.write("### Корзина")
     try:
-        resp = requests.get(f"{API_URL}/cart", params={"email": email})
+        resp = make_request(f"{API_URL}/cart", params={"email": email})
         resp.raise_for_status()
         cart = resp.json()
     except Exception as e:
@@ -142,15 +143,17 @@ def show_cart_page(email):
                 st.error(f"- {item}")
         else:
             try:
-                # resp = requests.post(f"{API_URL}/cart/checkout", json={"email": email})
-                # resp.raise_for_status()
                 order_data = {
-                "email": email,
-                "items": cart["items"],
-                "total_amount": total
+                    "email": email,
+                    "items": cart["items"],
+                    "total_amount": total
                 }
 
-                resp = requests.post(f"{API_URL}/cart/checkout", json=order_data)
+                resp = make_request(
+                    f"{API_URL}/cart/checkout",
+                    method="POST",
+                    json=order_data
+                )
                 resp.raise_for_status()
                 order_response = resp.json()
 
@@ -167,7 +170,7 @@ def show_cart_page(email):
 
     if st.button("Очистить корзину"):
         try:
-            resp = requests.post(f"{API_URL}/cart/clear", json={"email": email})
+            resp = make_request(f"{API_URL}/cart/clear", json={"email": email})
             resp.raise_for_status()
             st.success("Корзина очищена!")
             time.sleep(1)

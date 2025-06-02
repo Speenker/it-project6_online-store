@@ -49,6 +49,7 @@ services:
       - "9000:9000"
     volumes:
       - ch_data:/var/lib/clickhouse
+      - ./init_clickhouse.sql:/docker-entrypoint-initdb.d/init_clickhouse.sql
 
   clickhouse-ui:
     image: clickhouse/clickhouse-server:latest

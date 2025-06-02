@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import time
+import asyncio
 
 from pages.main_page import show_main_page
 from pages.cart import show_cart_page
@@ -9,18 +10,27 @@ from pages.admin_panel import show_admin_panel
 from pages.admin_dashboard import show_dashboard
 from services.kafka_logger import log_user_action
 from services.logging_config import logger
+from services.tracing_service import TracingService
 import pandas as pd
 
 API_URL = "http://fastapi:8000"
+tracing_service = TracingService()
+
+async def make_traced_request(url: str, method: str = "GET", **kwargs):
+    return await tracing_service.trace_request(url, method, **kwargs)
 
 def login():
     st.title("Авторизация")
     email = st.text_input("Почта")
     password = st.text_input("Пароль", type="password")
     if st.button("Войти"):
-        resp = requests.post(f"{API_URL}/login", json={"email": email, "password": password})
-        if resp.status_code == 200:
-            data = resp.json()
+        response = asyncio.run(make_traced_request(
+            f"{API_URL}/login",
+            method="POST",
+            json={"email": email, "password": password}
+        ))
+        if response.status_code == 200:
+            data = response.json()
             st.session_state["authenticated"] = True
             st.session_state["token"] = data["token"]
             st.session_state["user"] = data["user"]
@@ -47,8 +57,12 @@ def register():
         if password != second_password:
             st.error("Пароли не совпадают!")
             return
-        resp = requests.post(f"{API_URL}/register", json={"email": email, "password": password})
-        if resp.status_code == 200:
+        response = asyncio.run(make_traced_request(
+            f"{API_URL}/register",
+            method="POST",
+            json={"email": email, "password": password}
+        ))
+        if response.status_code == 200:
             # Log successful registration
             log_user_action('register', email)
             
@@ -56,7 +70,7 @@ def register():
             time.sleep(1)
             st.rerun()
         else:
-            st.error(resp.json().get("detail", "Ошибка регистрации"))
+            st.error(response.json().get("detail", "Ошибка регистрации"))
 
 def logout():
     st.title("Выход")
@@ -103,7 +117,7 @@ def main():
         elif page == "Корзина":
             show_cart_page(user["email"])
         elif page == "Основная":
-            show_main_page()
+            show_main_page(user["email"])
         elif page == "Панель Администратора":
             show_admin_panel()
         elif page == "Аналитика":
