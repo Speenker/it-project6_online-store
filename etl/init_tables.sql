@@ -12,8 +12,8 @@ DROP TABLE IF EXISTS categories CASCADE;
 
 -- Создание новых таблиц
 
-    -- Тип для прав пользователей
--- CREATE TYPE user_role AS ENUM ('user', 'admin');
+-- Тип для прав пользователей
+CREATE TYPE user_role AS ENUM ('user', 'admin');
 
 -- Таблица пользователей (users) с объединенными данными пользователей и админов
 CREATE TABLE users (
