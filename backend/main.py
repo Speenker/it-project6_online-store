@@ -10,8 +10,14 @@ from endpoints.profile import router as profile_router
 from endpoints.cart import router as cart_router
 from endpoints.admin_panel import router as admin_panel_router
 from repositories.es_sync import sync_products_to_es
+from services.tracing_service import TracingService, TracingMiddleware
 
 app = FastAPI()
+
+# Инициализация сервиса трейсинга
+tracing_service = TracingService()
+app.add_middleware(TracingMiddleware, tracing_service=tracing_service)
+
 app.include_router(products_router)
 app.include_router(profile_router)
 app.include_router(cart_router)
