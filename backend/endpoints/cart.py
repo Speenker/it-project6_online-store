@@ -111,7 +111,7 @@ def checkout_cart(data: Dict = Body(...)):
         raise HTTPException(status_code=500, detail=f"Ошибка базы данных: {e.pgerror}")
 
 
-@router.post("/cart/clear")
+@router.get("/cart/clear")
 def clear_cart(data: Dict = Body(...)):
     email = data["email"]
     carts[email] = {"items": []}
