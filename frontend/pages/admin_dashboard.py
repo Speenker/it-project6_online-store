@@ -102,15 +102,15 @@ def show_dashboard():
             st.dataframe(df_products, use_container_width=True)
         
         # Статистика по времени заказов
-        if financial_data['hourly_stats']:
-            st.subheader("Распределение заказов по времени")
-            df_hourly = pd.DataFrame(financial_data['hourly_stats'])
-            df_hourly['hour'] = pd.to_datetime(df_hourly['hour']).dt.hour
+        # if financial_data['hourly_stats']:
+        #     st.subheader("Распределение заказов по времени")
+        #     df_hourly = pd.DataFrame(financial_data['hourly_stats'])
+        #     df_hourly['hour'] = pd.to_datetime(df_hourly['hour']).dt.hour
             
-            fig_hourly = px.line(df_hourly, x='hour', y='order_count',
-                               title='Количество заказов по часам',
-                               labels={'order_count': 'Количество заказов', 'hour': 'Час'})
-            st.plotly_chart(fig_hourly)
+        #     fig_hourly = px.line(df_hourly, x='hour', y='order_count',
+        #                        title='Количество заказов по часам',
+        #                        labels={'order_count': 'Количество заказов', 'hour': 'Час'})
+        #     st.plotly_chart(fig_hourly)
         
         # Статистика по клиентам
         if financial_data['customer_stats']:
