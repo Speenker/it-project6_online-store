@@ -56,6 +56,28 @@ def get_users_with_password():
         print(f"Ошибка при получении пользователей: {e}")
         return []
 
+def update_user_balance(email: str, new_balance: float):
+    """
+    Обновляет баланс пользователя
+    
+    Args:
+        email (str): Email пользователя
+        new_balance (float): Новый баланс пользователя
+        
+    Returns:
+        bool: True если обновление прошло успешно, False в противном случае
+    """
+    query = "UPDATE users SET balance = %s WHERE email = %s"
+    try:
+        with psycopg2.connect(**DB_CONFIG) as conn:
+            with conn.cursor() as cur:
+                cur.execute(query, (new_balance, email))
+                conn.commit()
+                return True
+    except Exception as e:
+        print(f"Ошибка при обновлении баланса пользователя {email}: {e}")
+        return False
+
 def create_user(email, password):
     """
     Создает нового пользователя
